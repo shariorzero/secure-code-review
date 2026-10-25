@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class 1 ল্যাব — ইনপুট দাও, ফলাফল দেখো</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12263a; --ink-soft:#4a5a68; --paper:#f6f4ef; --card:#ffffff;
+    --line:#e0ddd4; --amber:#c97a1b; --amber-bg:#fdf1de;
+    --safe:#166856; --safe-bg:#e7f3ef; --danger:#a3321f; --danger-bg:#fbeae7;
+    --mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Noto Sans Bengali',sans-serif;line-height:1.55}
+  header{background:var(--ink);color:#fff;padding:28px 24px 22px}
+  header h1{margin:0 0 4px;font-size:26px;font-weight:700}
+  header p{margin:0;color:#b9c6d2;font-size:15px}
+  .connect{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center}
+  .connect input{flex:1;min-width:220px;padding:9px 12px;border-radius:8px;border:1px solid #2c4258;background:#16324a;color:#fff;font-family:var(--mono);font-size:14px}
+  .connect input::placeholder{color:#8ea3b5}
+  button{cursor:pointer;border:none;border-radius:8px;padding:9px 16px;font-family:'Noto Sans Bengali',sans-serif;font-size:14px;font-weight:600;background:var(--amber);color:#2a1a05}
+  button:hover{filter:brightness(1.06)}
+  button.ghost{background:transparent;border:1px solid #3c566d;color:#dce6ee}
+  #status-pill{font-size:13px;padding:5px 12px;border-radius:999px;background:#2c4258;color:#cfe0eb}
+  #status-pill.ok{background:var(--safe-bg);color:var(--safe)}
+  #status-pill.bad{background:var(--danger-bg);color:var(--danger)}
+  main{max-width:980px;margin:0 auto;padding:28px 20px 60px;display:flex;flex-direction:column;gap:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .card h2{margin:0 0 4px;font-size:19px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--amber-bg);color:var(--amber);padding:2px 9px;border-radius:999px;margin-bottom:8px}
+  .card p.explain{color:var(--ink-soft);font-size:14px;margin:6px 0 14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .row input,.row textarea{flex:1;min-width:180px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:14px}
+  .row textarea{min-height:54px;resize:vertical}
+  .out{margin-top:10px;border-radius:8px;background:#f1efe8;border:1px solid var(--line);padding:12px 14px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;word-break:break-word;display:none}
+  .out.show{display:block}
+  .out .meta{font-family:'Noto Sans Bengali',sans-serif;font-weight:600;font-size:13px;margin-bottom:6px}
+  .meta.ok{color:var(--safe)} .meta.bad{color:var(--danger)}
+  .hint{font-size:13px;color:var(--ink-soft);border-top:1px dashed var(--line);margin-top:14px;padding-top:10px}
+  .hint b{color:var(--ink)}
+  footer{max-width:980px;margin:0 auto 60px;padding:0 20px;color:var(--ink-soft);font-size:14px}
+  footer .box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  footer ol{margin:8px 0 0;padding-left:22px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Secure Code Review — ল্যাব GUI</h1>
+  <p>নিজে curl না লিখে, এখানে ইনপুট দিন আর ফলাফল দেখুন। প্রতিটি বাক্সে কী প্রশ্ন করতে হবে তা নিচে লেখা আছে।</p>
+  <div class="connect">
+    <input id="base" value="http://localhost:5000" spellcheck="false">
+    <button onclick="ping()">সংযোগ পরীক্ষা</button>
+    <span id="status-pill">যাচাই হয়নি</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="card">
+    <span class="tag">RED FLAG 1a</span>
+    <h2>ক্যালকুলেটর · /calc</h2>
+    <p class="explain">একটি হিসাব পাঠান। অ্যাপ সেটা কীভাবে চালায় তা-ই আজকের প্রশ্ন।</p>
+    <div class="row">
+      <input id="calc-expr" value="2+2" placeholder="যেমন: 2+2">
+      <button onclick="run('calc')">চালান</button>
+    </div>
+    <div class="row">
+      <button class="ghost" onclick="document.getElementById('calc-expr').value=\`__import__('os').getcwd()\`">সন্দেহজনক ইনপুট বসাও</button>
+    </div>
+    <div class="out" id="out-calc"></div>
+    <div class="hint"><b>লক্ষ করুন:</b> দ্বিতীয় বোতামে একটি হিসাব নয়, একটি প্রশ্ন বসানো আছে। ফলাফলে যদি সার্ভারের ফোল্ডারের পথ দেখা যায়, বুঝবেন ইনপুট কোড হিসেবে চলছে।</div>
+  </div>
+
+  <div class="card">
+    <span class="tag">RED FLAG 1b</span>
+    <h2>কোড রানার · /run</h2>
+    <p class="explain">এই রুটে ইউজারের লেখা কোড সার্ভারে চলে কিনা পরীক্ষা করুন।</p>
+    <div class="row">
+      <textarea id="run-code">result = 40 + 2</textarea>
+      <button onclick="run('run')">চালান</button>
+    </div>
+    <div class="out" id="out-run"></div>
+    <div class="hint"><b>প্রশ্ন করুন:</b> ইউজার নিজের কোড কেন পাঠাবে? এই রুটের আদৌ দরকার আছে কি?</div>
+  </div>
+
+  <div class="card">
+    <span class="tag">RED FLAG 4</span>
+    <h2>লগইন ও কুকি · /login</h2>
+    <p class="explain">লগইন করুন, তারপর ব্রাউজারের জাভাস্ক্রিপ্ট দিয়ে কুকি পড়ার চেষ্টা করুন।</p>
+    <div class="row">
+      <input id="login-user" value="alice" placeholder="ইউজারনেম">
+      <input id="login-pass" value="alice123" placeholder="পাসওয়ার্ড" type="text">
+      <button onclick="run('login')">লগইন করুন</button>
+    </div>
+    <div class="row">
+      <button class="ghost" onclick="readCookie()">জাভাস্ক্রিপ্ট দিয়ে কুকি পড়ো</button>
+    </div>
+    <div class="out" id="out-login"></div>
+    <div class="hint"><b>বুঝুন:</b> কুকি দেখা গেলে মানে <code>HttpOnly</code> ফ্ল্যাগ বন্ধ, জাভাস্ক্রিপ্ট (এবং তাই কোনো ক্ষতিকর স্ক্রিপ্টও) কুকি পড়তে পারছে। খালি ফল আসা মানে ফ্ল্যাগ কাজ করছে।</div>
+  </div>
+
+  <div class="card">
+    <span class="tag">অথরাইজেশন</span>
+    <h2>অ্যাডমিন রিপোর্ট · /admin</h2>
+    <p class="explain">লগইন ছাড়া, অথবা সাধারণ ইউজার হিসেবে এই বোতাম চাপুন।</p>
+    <div class="row"><button onclick="run('admin')">রিপোর্ট দেখার চেষ্টা করুন</button></div>
+    <div class="out" id="out-admin"></div>
+    <div class="hint"><b>প্রশ্ন করুন:</b> <code>403 forbidden</code> এলে পাহারাদার কাজ করছে। গোপন রিপোর্ট সরাসরি দেখা গেলে পাহারা নেই বা ফাঁকা।</div>
+  </div>
+
+  <div class="card">
+    <span class="tag">RED FLAG 2</span>
+    <h2>ত্রুটি পাতা · /boom</h2>
+    <p class="explain">ইচ্ছাকৃত একটি ভুল ঘটিয়ে দেখুন অ্যাপ কতটা ভেতরের তথ্য দেখায়।</p>
+    <div class="row"><button onclick="run('boom')">ভুলটি ঘটান</button></div>
+    <div class="out" id="out-boom"></div>
+    <div class="hint"><b>বুঝুন:</b> উত্তরে কোডের লাইন বা <code>Werkzeug Debugger</code> লেখা থাকলে debug মোড চালু, এটাই বিপদ। শুধু <code>Internal Server Error</code> এলে ফিক্স কাজ করেছে।</div>
+  </div>
+
+  <div class="card">
+    <span class="tag">RED FLAG 5</span>
+    <h2>CORS পরীক্ষা</h2>
+    <p class="explain">এই পাতাটি নিজেই অ্যাপের থেকে আলাদা ঠিকানায় (origin) চলছে। তাই এই বোতাম আসল CORS পরীক্ষা করে, কোনো ভান করা লাগে না।</p>
+    <div class="row"><button onclick="run('cors')">এই পাতা থেকে অনুরোধ পাঠাও</button></div>
+    <div class="out" id="out-cors"></div>
+    <div class="hint"><b>বুঝুন:</b> অনুরোধ আটকে গেলে (ব্রাউজার এরর দেখালে) মানে অ্যাপ এই পাতাকে অনুমতি দেয়নি, ফিক্স কাজ করছে। সফল হলে মানে অ্যাপ সব origin-কে অনুমতি দিচ্ছে।</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="box">
+    <b>প্রতিটি ফলাফল দেখার সময় নিজেকে ৩টি প্রশ্ন করুন:</b>
+    <ol>
+      <li>ইনপুট কোথা থেকে আসছে?</li>
+      <li>সেটা কোথায় গিয়ে কাজ করছে?</li>
+      <li>মাঝখানে কেউ পাহারা দিচ্ছে?</li>
+    </ol>
+    এই পাতা শুধু আচরণ দেখায়, কারণ বোঝাতে হলে সবসময় কোড (<code>student/app.py</code>) নিজে পড়তে হবে।
+  </div>
+</footer>
+
+<script>
+function base(){ return document.getElementById('base').value.replace(/\/$/, ''); }
+
+function showOut(id, ok, metaText, bodyText){
+  const el = document.getElementById('out-'+id);
+  el.className = 'out show';
+  el.innerHTML = '<div class="meta '+(ok?'ok':'bad')+'">'+metaText+'</div>';
+  el.innerHTML += bodyText;
+}
+
+async function ping(){
+  const pill = document.getElementById('status-pill');
+  pill.className = ''; pill.textContent = 'যাচাই করছি…';
+  try{
+    const r = await fetch(base()+'/', {mode:'cors'});
+    pill.className = 'ok'; pill.textContent = 'সংযুক্ত ('+r.status+')';
+  }catch(e){
+    pill.className = 'bad'; pill.textContent = 'সংযোগ নেই — অ্যাপ চালু আছে কিনা দেখুন';
+  }
+}
+
+async function call(path, opts){
+  const t0 = performance.now();
+  const r = await fetch(base()+path, Object.assign({credentials:'include', mode:'cors'}, opts));
+  const ms = Math.round(performance.now()-t0);
+  let text = await r.text();
+  try{ text = JSON.stringify(JSON.parse(text), null, 2); }
+  catch(e){ text = text.length>400 ? text.slice(0,400)+'\n…(ছোট করা হয়েছে)' : text; }
+  return {status:r.status, ms, text};
+}
+
+async function run(which){
+  try{
+    let res, label;
+    if(which==='calc'){
+      const expr = encodeURIComponent(document.getElementById('calc-expr').value);
+      res = await call('/calc?expr='+expr, {method:'GET'});
+    } else if(which==='run'){
+      res = await call('/run', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({code: document.getElementById('run-code').value})});
+    } else if(which==='login'){
+      res = await call('/login', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username: document.getElementById('login-user').value,
+                               password: document.getElementById('login-pass').value})});
+    } else if(which==='admin'){
+      res = await call('/admin', {method:'GET'});
+    } else if(which==='boom'){
+      res = await call('/boom', {method:'GET'});
+    } else if(which==='cors'){
+      res = await call('/', {method:'GET'});
+    }
+    const ok = res.status>=200 && res.status<400;
+    showOut(which, ok, 'HTTP '+res.status+' · '+res.ms+'ms', escapeHtml(res.text));
+  }catch(e){
+    showOut(which, false, 'অনুরোধ ব্যর্থ হয়েছে (সম্ভবত CORS বা সংযোগ সমস্যা)', escapeHtml(String(e)));
+  }
+}
+
+function readCookie(){
+  const val = document.cookie;
+  showOut('login', val==='', val ? 'জাভাস্ক্রিপ্ট কুকি পড়তে পারছে ⚠️' : 'জাভাস্ক্রিপ্ট কিছু পড়তে পারছে না ✓',
+    escapeHtml(val || '(খালি — HttpOnly ঠিকমতো কাজ করছে, অথবা এখনো লগইন করেননি)'));
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+ping();
+</script>
+</body>
+</html>
